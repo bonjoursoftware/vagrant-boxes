@@ -1,0 +1,26 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "ubuntu/bionic64"
+  config.vm.network "forwarded_port", guest: 5601, host: 5601
+  config.vm.network "forwarded_port", guest: 9200, host: 9200
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.cpus = 2
+    vb.memory = "2048"
+    vb.name = "ubuntu-bionic64-docker-elk"
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    apt-get update
+    apt-get upgrade
+    apt-get install docker.io -y
+    apt-get install docker-compose -y
+    usermod -aG docker vagrant
+    docker run -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:6.3.2 &
+    docker run --net=host -e "ELASTICSEARCH_URL=http://localhost:9200" docker.elastic.co/kibana/kibana:6.3.2 &
+  SHELL
+
+end
