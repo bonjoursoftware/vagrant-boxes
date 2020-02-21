@@ -1,0 +1,39 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/bionic64"
+  config.vm.synced_folder "/home/antoine/src", "/shared/src"
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "4096"
+    vb.cpus = 4
+    vb.customize ["modifyvm", :id, "--vram", "256"]
+    vb.gui = true
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo apt-get update
+    sudo apt-get upgrade -y
+    sudo apt-get install -y xfce4
+    sudo snap install intellij-idea-ultimate --classic
+    curl -sSL https://get.docker.com | sh
+    sudo usermod -aG docker vagrant
+    sudo apt-get install -y unzip zip
+  SHELL
+
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    curl -s "https://get.sdkman.io" | bash
+    source "/home/vagrant/.sdkman/bin/sdkman-init.sh"
+    sdk install java 13.0.2.j9-adpt
+    sdk install groovy
+    sdk install gradle
+    sdk install micronaut
+  SHELL
+
+  config.vm.provision "shell", reboot: true, inline: <<-SHELL
+    sudo apt-get update
+    sudo apt-get upgrade -y
+    sudo apt-get dist-upgrade -y
+    sudo apt-get autoremove -y
+  SHELL
+end
